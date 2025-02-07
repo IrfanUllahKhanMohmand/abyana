@@ -1,9 +1,43 @@
-import 'package:abyana/screens/crop_survey_screen.dart';
+import 'package:abyana/app_repository.dart';
+import 'package:abyana/models/survey_summary.dart';
 import 'package:abyana/screens/survey_list_details_screen.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-class SurveyList extends StatelessWidget {
+class SurveyList extends StatefulWidget {
   const SurveyList({super.key});
+
+  @override
+  State<SurveyList> createState() => _SurveyListState();
+}
+
+class _SurveyListState extends State<SurveyList> {
+  AppRepository appRepository = AppRepository();
+  List<SurveySummary> surveys = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadSurveys();
+  }
+
+  Future<void> loadSurveys() async {
+    try {
+      final result = await appRepository.getCropSurveys();
+      setState(() {
+        surveys = result;
+        isLoading = false;
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error loading surveys: $e');
+      }
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,90 +63,75 @@ class SurveyList extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                headingRowColor: WidgetStateProperty.all(Color(0xFF4880FF)),
-                border: TableBorder.all(color: Colors.grey[400]!),
-                columns: const [
-                  DataColumn(
-                      label: Text('ID', style: TextStyle(color: Colors.white))),
-                  DataColumn(
-                      label: Text('Irrigator Name',
-                          style: TextStyle(color: Colors.white))),
-                  DataColumn(
-                      label: Text('Khata No.',
-                          style: TextStyle(color: Colors.white))),
-                  DataColumn(
-                      label: Text('Village',
-                          style: TextStyle(color: Colors.white))),
-                  DataColumn(
-                      label: Text('Action',
-                          style: TextStyle(color: Colors.white))),
-                ],
-                rows: List.generate(
-                  3,
-                  (index) => DataRow(
-                    cells: [
-                      DataCell(Text('${index + 1}')),
-                      const DataCell(Text('Qazi Abbas')),
-                      const DataCell(Text('1561')),
-                      const DataCell(Text('Attock')),
-                      DataCell(
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            InkWell(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const SurveyListDetailsScreen(),
+            child: isLoading
+                ? Center(child: CircularProgressIndicator())
+                : SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      headingRowColor:
+                          WidgetStateProperty.all(Color(0xFF4880FF)),
+                      border: TableBorder.all(color: Colors.grey[400]!),
+                      columns: const [
+                        DataColumn(
+                            label: Text('ID',
+                                style: TextStyle(color: Colors.white))),
+                        DataColumn(
+                            label: Text('Irrigator Name',
+                                style: TextStyle(color: Colors.white))),
+                        DataColumn(
+                            label: Text('Khata No.',
+                                style: TextStyle(color: Colors.white))),
+                        DataColumn(
+                            label: Text('Village',
+                                style: TextStyle(color: Colors.white))),
+                        DataColumn(
+                            label: Text('Action',
+                                style: TextStyle(color: Colors.white))),
+                      ],
+                      rows: List.generate(
+                        surveys.length,
+                        (index) => DataRow(
+                          cells: [
+                            DataCell(Text('${surveys[index].cropSurveyId}')),
+                            DataCell(Text(surveys[index].irrigatorName)),
+                            DataCell(Text(surveys[index].irrigatorKhataNumber)),
+                            DataCell(Text("Village")),
+                            DataCell(
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  InkWell(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              SurveyListDetailsScreen(
+                                            surveyId:
+                                                surveys[index].cropSurveyId,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: Color(0xFF007EF2),
+                                        shape: BoxShape.rectangle,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: const Icon(Icons.visibility,
+                                          color: Colors.white),
+                                    ),
                                   ),
-                                );
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: Color(0xFF007EF2),
-                                  shape: BoxShape.rectangle,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: const Icon(Icons.visibility,
-                                    color: Colors.white),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            InkWell(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const CropSurveyScreen(),
-                                  ),
-                                );
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: Color(0xFF47CC61),
-                                  shape: BoxShape.rectangle,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: const Icon(Icons.arrow_forward,
-                                    color: Colors.white),
+                                ],
                               ),
                             ),
                           ],
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-            ),
           ),
         ],
       ),

@@ -1,6 +1,7 @@
 import 'package:abyana/app_repository.dart';
 import 'package:abyana/models/canal.dart';
 import 'package:abyana/models/halqa.dart';
+import 'package:abyana/models/user.dart';
 import 'package:abyana/models/village.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -15,8 +16,6 @@ class AddIrrigatorScreen extends StatefulWidget {
 class _AddIrrigatorScreenState extends State<AddIrrigatorScreen> {
   bool isLoading = true;
   AppRepository appRepository = AppRepository();
-
-  List<Halqa> halqas = [];
   List<Village> villages = [];
   List<Canal> canals = [];
 
@@ -38,12 +37,10 @@ class _AddIrrigatorScreenState extends State<AddIrrigatorScreen> {
 
   Future<void> fetchData() async {
     try {
-      final fetchedHalqas = await appRepository.getHalqas();
       final fetchedVillages = await appRepository.getVillages();
       final fetchedCanals = await appRepository.getCanals();
 
       setState(() {
-        halqas = fetchedHalqas;
         villages = fetchedVillages;
         canals = fetchedCanals;
         isLoading = false;
@@ -65,8 +62,9 @@ class _AddIrrigatorScreenState extends State<AddIrrigatorScreen> {
       });
 
       try {
+        User user = await appRepository.getUser();
         await appRepository.createIrrigator({
-          'halqa_id': selectedHalqa?.id,
+          'halqa_id': user.halqaId,
           'village_id': selectedVillage?.villageId,
           'canal_id': selectedCanal?.id,
           'irrigator_name': _irrigatorNameController.text,
@@ -144,31 +142,6 @@ class _AddIrrigatorScreenState extends State<AddIrrigatorScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 16),
-                      Text("Halqa / حلقہ",
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 4),
-                      DropdownButtonFormField<Halqa>(
-                        dropdownColor: Colors.white,
-                        decoration: InputDecoration(
-                          hintText: 'Select Halqa / حلقہ',
-                          border: OutlineInputBorder(),
-                        ),
-                        value: selectedHalqa,
-                        items: halqas.map((halqa) {
-                          return DropdownMenuItem(
-                            value: halqa,
-                            child: Text(halqa.halqaName),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            selectedHalqa = value;
-                          });
-                        },
-                        validator: (value) =>
-                            value == null ? 'Please select a Halqa' : null,
-                      ),
                       const SizedBox(height: 16),
                       Text('Village / گاؤں',
                           style: TextStyle(fontWeight: FontWeight.bold)),

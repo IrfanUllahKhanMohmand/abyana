@@ -1,6 +1,6 @@
+import 'package:abyana/app_repository.dart';
 import 'package:abyana/screens/login_page.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'screens/irrigator_list.dart';
 
@@ -12,9 +12,13 @@ class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   Future<bool> _checkToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token');
-    return token != null; // Returns true if token exists, false otherwise
+    AppRepository appRepository = AppRepository();
+
+    return appRepository.getUser().then((user) {
+      return true;
+    }).catchError((e) {
+      return false;
+    });
   }
 
   @override

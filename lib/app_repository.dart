@@ -1,10 +1,17 @@
 import 'dart:convert';
 import 'package:abyana/models/canal.dart';
+import 'package:abyana/models/crop.dart';
+import 'package:abyana/models/crop_price.dart';
 import 'package:abyana/models/halqa.dart';
 import 'package:abyana/models/irrigator.dart';
+import 'package:abyana/models/outlet.dart';
+import 'package:abyana/models/survey.dart';
+import 'package:abyana/models/user.dart';
 import 'package:abyana/models/village.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'models/survey_summary.dart';
 
 class AppRepository {
   final String baseUrl =
@@ -20,18 +27,32 @@ class AppRepository {
     );
 
     if (response.statusCode == 200) {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      prefs.setString('token', json.decode(response.body)['token']);
+      final result = json.decode(response.body);
+      final user = User.fromRemoteJson(result);
+      saveUser(user.toJson());
       return json.decode(response.body);
     } else {
       throw Exception('Failed to login');
     }
   }
 
+  // Save User Locally
+  Future<void> saveUser(Map<String, dynamic> user) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('user', json.encode(user));
+  }
+
+  // Get User Locally
+  Future<User> getUser() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String user = prefs.getString('user') ?? '';
+    return User.fromJson(json.decode(user));
+  }
+
   //Logout
   Future<void> logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.remove('token');
+    prefs.remove('user');
   }
 
   //Get Villages
@@ -40,19 +61,48 @@ class AppRepository {
 
     if (response.statusCode == 200) {
       final result = json.decode(response.body);
-      return (result as List).map((e) => Village.fromJson(e)).toList();
+      final villages =
+          (result as List).map((e) => Village.fromJson(e)).toList();
+      User user = await getUser();
+      // Filter villages based on user halqa
+      return villages
+          .where((village) => village.halqaId == user.halqaId)
+          .toList();
     } else {
       throw Exception('Failed to load villages');
     }
   }
 
   //Get Canals
+  // Future<List<Canal>> getCanals() async {
+  //   // Get the filtered villages
+  //   List<Village> villages = await getVillages();
+  //   List<int> villageIds = villages.map((v) => v.villageId).toList();
+
+  //   final response = await http.get(Uri.parse('${baseUrl}canals'));
+
+  //   if (response.statusCode == 200) {
+  //     final result = json.decode(response.body);
+  //     List<Canal> canals =
+  //         (result['data'] as List).map((e) => Canal.fromJson(e)).toList();
+
+  //     // Filter canals based on villageId
+  //     return canals
+  //         .where((canal) => villageIds.contains(canal.villageId))
+  //         .toList();
+  //   } else {
+  //     throw Exception('Failed to load canals');
+  //   }
+  // }
+
   Future<List<Canal>> getCanals() async {
     final response = await http.get(Uri.parse('${baseUrl}canals'));
 
     if (response.statusCode == 200) {
       final result = json.decode(response.body);
-      return (result['data'] as List).map((e) => Canal.fromJson(e)).toList();
+      List<Canal> canals =
+          (result['data'] as List).map((e) => Canal.fromJson(e)).toList();
+      return canals;
     } else {
       throw Exception('Failed to load canals');
     }
@@ -70,10 +120,47 @@ class AppRepository {
     }
   }
 
+  //get crops
+  Future<List<Crop>> getCrops() async {
+    final response = await http.get(Uri.parse('${baseUrl}crops'));
+
+    if (response.statusCode == 200) {
+      final result = json.decode(response.body);
+      return (result['data'] as List).map((e) => Crop.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to load crops');
+    }
+  }
+
+  //cropprices
+  Future<List<CropPrice>> getCropPrices() async {
+    final response = await http.get(Uri.parse('${baseUrl}cropprice'));
+
+    if (response.statusCode == 200) {
+      final result = json.decode(response.body);
+      return (result['data'] as List)
+          .map((e) => CropPrice.fromJson(e))
+          .toList();
+    } else {
+      throw Exception('Failed to load crop prices:');
+    }
+  }
+
+  //outlets
+  Future<List<Outlet>> getOutlets() async {
+    final response = await http.get(Uri.parse('${baseUrl}outlet'));
+
+    if (response.statusCode == 200) {
+      final result = json.decode(response.body);
+      return (result['data'] as List).map((e) => Outlet.fromJson(e)).toList();
+    } else {
+      throw Exception('Failed to load outlets');
+    }
+  }
+
   // CRUD operations for Irrigators
   Future<List<Irrigator>> getIrrigators() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String token = prefs.getString('token') ?? '';
+    final token = (await getUser()).token;
     final response =
         await http.get(Uri.parse('${baseUrl}irrigators'), headers: {
       'Content-Type': 'application/json',
@@ -140,21 +227,37 @@ class AppRepository {
   }
 
   // CRUD operations for Crop Survey
-  Future<List<dynamic>> getCropSurveys() async {
-    final response = await http.get(Uri.parse('${baseUrl}crop-surveys'));
+  Future<List<SurveySummary>> getCropSurveys() async {
+    final token = (await getUser()).token;
+    final response =
+        await http.get(Uri.parse('${baseUrl}land-surveys'), headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $token',
+    });
 
     if (response.statusCode == 200) {
-      return json.decode(response.body);
+      final result = json.decode(response.body);
+      return (result['data'] as List)
+          .map((e) => SurveySummary.fromJson(e))
+          .toList();
     } else {
       throw Exception('Failed to load crop surveys');
     }
   }
 
-  Future<Map<String, dynamic>> getCropSurvey(int id) async {
-    final response = await http.get(Uri.parse('${baseUrl}crop-surveys/$id'));
+  Future<Survey> getCropSurvey(int id) async {
+    final token = (await getUser()).token;
+    final response =
+        await http.get(Uri.parse('${baseUrl}surveys/$id'), headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $token',
+    });
 
     if (response.statusCode == 200) {
-      return json.decode(response.body);
+      final result = json.decode(response.body);
+      return Survey.fromJson(result['data']);
     } else {
       throw Exception('Failed to load crop survey');
     }
@@ -162,16 +265,19 @@ class AppRepository {
 
   Future<Map<String, dynamic>> createCropSurvey(
       Map<String, dynamic> cropSurvey) async {
-    final response = await http.post(
-      Uri.parse('${baseUrl}crop-surveys'),
-      body: json.encode(cropSurvey),
-      headers: {'Content-Type': 'application/json'},
-    );
+    final token = (await getUser()).token;
+    final response = await http.post(Uri.parse('${baseUrl}storesurvey'),
+        body: json.encode(cropSurvey),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        });
 
     if (response.statusCode == 201) {
       return json.decode(response.body);
     } else {
-      throw Exception('Failed to create crop survey');
+      throw Exception('Failed to create crop survey: ${response.body}');
     }
   }
 

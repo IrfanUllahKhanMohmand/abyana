@@ -39,4 +39,9 @@ class Village {
       'halqa': halqa,
     };
   }
+
+  @override
+  String toString() {
+    return villageName;
+  }
 }

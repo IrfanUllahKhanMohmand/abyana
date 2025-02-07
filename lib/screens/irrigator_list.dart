@@ -166,7 +166,9 @@ class _IrrigatorListState extends State<IrrigatorList> {
                                             context,
                                             MaterialPageRoute(
                                               builder: (context) =>
-                                                  const CropSurveyScreen(),
+                                                  CropSurveyScreen(
+                                                irrigator: irrigator,
+                                              ),
                                             ),
                                           );
                                         },

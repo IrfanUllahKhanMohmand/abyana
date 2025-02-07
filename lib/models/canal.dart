@@ -36,4 +36,9 @@ class Canal {
       'updated_at': updatedAt.toIso8601String(),
     };
   }
+
+  @override
+  String toString() {
+    return canalName;
+  }
 }

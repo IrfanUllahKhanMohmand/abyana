@@ -19,7 +19,6 @@ class _EditIrrigatorScreenState extends State<EditIrrigatorScreen> {
   bool isLoading = true;
   AppRepository appRepository = AppRepository();
 
-  List<Halqa> halqas = [];
   List<Village> villages = [];
   List<Canal> canals = [];
 
@@ -48,16 +47,12 @@ class _EditIrrigatorScreenState extends State<EditIrrigatorScreen> {
 
   Future<void> fetchData() async {
     try {
-      final fetchedHalqas = await appRepository.getHalqas();
       final fetchedVillages = await appRepository.getVillages();
       final fetchedCanals = await appRepository.getCanals();
 
       setState(() {
-        halqas = fetchedHalqas;
         villages = fetchedVillages;
         canals = fetchedCanals;
-        selectedHalqa =
-            halqas.firstWhere((h) => h.id == widget.irrigator.halqaId);
         selectedVillage = villages
             .firstWhere((v) => v.villageId == widget.irrigator.villageId);
         isLoading = false;
@@ -79,10 +74,11 @@ class _EditIrrigatorScreenState extends State<EditIrrigatorScreen> {
       });
 
       try {
+        // User user = await appRepository.getUser();
         // await appRepository.updateIrrigator(
         //   widget.irrigator.id,
         //   {
-        //     'halqa': selectedHalqa?.id,
+        //     'halqa_id': user.halqaId,
         //     'village': selectedVillage?.villageId,
         //     'canal': selectedCanal?.id,
         //     'irrigatorName': _irrigatorNameController.text,
@@ -157,30 +153,6 @@ class _EditIrrigatorScreenState extends State<EditIrrigatorScreen> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 16),
-                      Text("Halqa / حلقہ",
-                          style: TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 4),
-                      DropdownButtonFormField<Halqa>(
-                        decoration: InputDecoration(
-                          hintText: 'Select Halqa / حلقہ',
-                          border: OutlineInputBorder(),
-                        ),
-                        value: selectedHalqa,
-                        items: halqas.map((halqa) {
-                          return DropdownMenuItem(
-                            value: halqa,
-                            child: Text(halqa.halqaName),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() {
-                            selectedHalqa = value;
-                          });
-                        },
-                        validator: (value) =>
-                            value == null ? 'Please select a Halqa' : null,
-                      ),
                       const SizedBox(height: 16),
                       Text('Village / گاؤں',
                           style: TextStyle(fontWeight: FontWeight.bold)),
