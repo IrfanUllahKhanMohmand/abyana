@@ -92,11 +92,13 @@ class AppDrawer extends StatelessWidget {
                       TextButton(
                         onPressed: () {
                           AppRepository().logout();
-                          Navigator.pushReplacement(
-                            context,
+
+                          //remove all the previous routes
+                          Navigator.of(context).pushAndRemoveUntil(
                             MaterialPageRoute(
                               builder: (context) => const LoginPage(),
                             ),
+                            (route) => false,
                           );
                         },
                         child: const Text('Log Out'),
