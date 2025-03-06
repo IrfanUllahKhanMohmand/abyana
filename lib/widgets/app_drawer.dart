@@ -1,5 +1,6 @@
 import 'package:abyana/app_repository.dart';
 import 'package:abyana/screens/login_page.dart';
+import 'package:abyana/screens/pedometer_screen.dart';
 import 'package:flutter/material.dart';
 
 import '../screens/survey_list.dart';
@@ -66,6 +67,20 @@ class AppDrawer extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) => const SurveyList(),
+                ),
+              );
+            },
+          ),
+          //pedometer screen
+          ListTile(
+            leading: const Icon(Icons.directions_walk),
+            title: const Text('Pedometer'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const PedometerScreen(),
                 ),
               );
             },

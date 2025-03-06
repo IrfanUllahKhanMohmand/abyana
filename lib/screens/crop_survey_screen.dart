@@ -66,6 +66,7 @@ class _CropSurveyScreenState extends State<CropSurveyScreen> {
     _irrigatorNameController.text = widget.irrigator.irrigatorName;
     _irrigatorKhataNumberController.text =
         widget.irrigator.irrigatorKhataNumber;
+    _selectedVillage = widget.irrigator.villageId.toString();
     fetchData();
   }
 
@@ -230,13 +231,19 @@ class _CropSurveyScreenState extends State<CropSurveyScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      _buildDropdown(
-                          'Village / گاؤں', 'Select Village', villages,
-                          (value) {
-                        Village val = value as Village;
-                        setState(
-                            () => _selectedVillage = val.villageId.toString());
-                      }),
+                      IgnorePointer(
+                        child: _buildDropdownWithInitialValue(
+                            'Village / گاؤں', 'Select Village', villages,
+                            (value) {
+                          Village val = value as Village;
+                          setState(() =>
+                              _selectedVillage = val.villageId.toString());
+                        },
+                            villages
+                                .where((v) =>
+                                    v.villageId.toString() == _selectedVillage)
+                                .firstOrNull),
+                      ),
                       Row(
                         children: [
                           Expanded(
@@ -595,6 +602,50 @@ class _CropSurveyScreenState extends State<CropSurveyScreen> {
               }
               return null;
             },
+          ),
+        ],
+      ),
+    );
+  }
+
+  //build dropdown with initial value
+  Widget _buildDropdownWithInitialValue(String label, String hint,
+      List<dynamic> items, Function(dynamic) onChanged, dynamic initialValue) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label,
+              style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold)),
+          DropdownButtonFormField<dynamic>(
+            itemHeight: 48,
+            dropdownColor: Colors.white,
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: TextStyle(
+                  color: Colors.grey[400],
+                  fontSize: 14,
+                  overflow: TextOverflow.ellipsis),
+              border: const OutlineInputBorder(),
+            ),
+            items: items.map((dynamic value) {
+              return DropdownMenuItem<dynamic>(
+                value: value,
+                child: Text(value.toString()),
+              );
+            }).toList(),
+            onChanged: onChanged,
+            validator: (value) {
+              if (value == null) {
+                return 'Please select $hint';
+              }
+              return null;
+            },
+            value: initialValue,
           ),
         ],
       ),
